@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 function Orders() {
   const [orders, setOrders] = useState([]);
@@ -14,7 +17,7 @@ function Orders() {
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/orders');
+      const res = await axios.get(`${API_URL}/orders`);
       setOrders(res.data);
     } catch (err) {
       alert(err.response?.data?.msg || 'Failed to fetch orders');
@@ -23,7 +26,7 @@ function Orders() {
 
   const fetchCustomers = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/customers');
+      const res = await axios.get(`${API_URL}/customers`);
       setCustomers(res.data);
     } catch (err) {
       alert(err.response?.data?.msg || 'Failed to fetch customers');
@@ -32,7 +35,7 @@ function Orders() {
 
   const fetchItems = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/items');
+      const res = await axios.get(`${API_URL}/items`);
       setItems(res.data);
     } catch (err) {
       alert(err.response?.data?.msg || 'Failed to fetch items');
@@ -55,7 +58,7 @@ function Orders() {
 
   const handleSubmit = async () => {
     try {
-      await axios.post('http://localhost:5000/api/orders', form);
+      await axios.post(`${API_URL}/orders`, form);
       setForm({ customer_id: '', items: [{ item_id: '', quantity: '' }] });
       fetchOrders();
     } catch (err) {
@@ -74,7 +77,7 @@ function Orders() {
         >
           <option value="">Select Customer</option>
           {customers.map((customer) => (
-            <option key={customer.id} value={customer.id}>{customer.name}</option>
+            <option key={customer._id} value={customer._id}>{customer.name}</option>
           ))}
         </select>
         {form.items.map((item, index) => (
@@ -86,7 +89,7 @@ function Orders() {
             >
               <option value="">Select Item</option>
               {items.map((i) => (
-                <option key={i.id} value={i.id}>{i.name}</option>
+                <option key={i._id} value={i._id}>{i.name}</option>
               ))}
             </select>
             <input
@@ -132,8 +135,8 @@ function Orders() {
           </thead>
           <tbody>
             {orders.map((order) => (
-              <tr key={order.id} className="hover:bg-gray-50">
-                <td className="p-3 border-b">{order.id}</td>
+              <tr key={order._id} className="hover:bg-gray-50">
+                <td className="p-3 border-b">{order._id}</td>
                 <td className="p-3 border-b">{order.customer_name}</td>
                 <td className="p-3 border-b">
                   {order.items.map((item, i) => (
