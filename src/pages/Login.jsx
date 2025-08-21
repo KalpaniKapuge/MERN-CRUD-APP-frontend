@@ -9,36 +9,53 @@ function Login() {
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
+    if (!username || !password) {
+      alert('Please fill in both username and password');
+      return;
+    }
     const success = await login(username, password);
     if (success) navigate('/dashboard');
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
-      <input
-        type="text"
-        placeholder="Username"
-        value={username}
-        onChange={(e) => setUsername(e.target.value)}
-        className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-      <button
-        onClick={handleSubmit}
-        className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-      >
-        Login
-      </button>
-      <p className="mt-4 text-center">
-        Don't have an account? <Link to="/register" className="text-blue-500 hover:underline">Register</Link>
-      </p>
+    <div className="min-h-screen flex items-center justify-center bg-purple-200">
+      <div className="w-full max-w-md p-8 bg-white/20 rounded-2xl shadow-2xl border border-puple-300">
+        <h2 className="text-3xl font-bold mb-6 text-center text-purple-800">
+          Welcome Back
+        </h2>
+
+        <label className="block text-gray-700 mb-2 font-medium">Username</label>
+        <input
+          type="text"
+          placeholder="Enter your username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300"
+        />
+
+        <label className="block text-gray-700 mb-2 font-medium">Password</label>
+        <input
+          type="password"
+          placeholder="Enter your password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full p-3 mb-6 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300"
+        />
+
+        <button
+          onClick={handleSubmit}
+          className="w-full py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition duration-300 shadow-md"
+        >
+          Login
+        </button>
+
+        <p className="mt-5 text-center text-gray-600">
+          Don't have an account?{' '}
+          <Link to="/register" className="text-purple-600 font-medium hover:underline">
+            Register
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,130 +1,176 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { FiEdit, FiTrash2 } from 'react-icons/fi';
 
 function Customers() {
   const [customers, setCustomers] = useState([]);
   const [form, setForm] = useState({ name: '', nic: '', contactNo: '', address: '' });
   const [editingId, setEditingId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     fetchCustomers();
   }, []);
 
   const fetchCustomers = async () => {
+    setIsLoading(true);
     try {
-      const res = await axios.get('http://localhost:5000/api/customers');
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/customers`);
       setCustomers(res.data);
     } catch (err) {
-      alert(err.response?.data?.msg || 'Failed to fetch customers');
+      toast.error(err.response?.data?.msg || 'Failed to fetch customers');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSubmit = async () => {
+    if (!form.name || !form.address) {
+      toast.error('Name and Address are required');
+      return;
+    }
+    setIsLoading(true);
     try {
       if (editingId) {
-        await axios.put(`http://localhost:5000/api/customers/${editingId}`, form);
+        await axios.put(`${import.meta.env.VITE_API_URL}/customers/${editingId}`, form);
+        toast.success('Customer updated successfully');
         setEditingId(null);
       } else {
-        await axios.post('http://localhost:5000/api/customers', form);
+        await axios.post(`${import.meta.env.VITE_API_URL}/customers`, form);
+        toast.success('Customer added successfully');
       }
       setForm({ name: '', nic: '', contactNo: '', address: '' });
       fetchCustomers();
     } catch (err) {
-      alert(err.response?.data?.msg || 'Failed to save customer');
+      toast.error(err.response?.data?.msg || 'Failed to save customer');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleEdit = (customer) => {
-    setForm({ name: customer.name, nic: customer.nic || '', contactNo: customer.contactNo || '', address: customer.address });
+    setForm({
+      name: customer.name,
+      nic: customer.nic || '',
+      contactNo: customer.contactNo || '',
+      address: customer.address,
+    });
     setEditingId(customer.id);
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this customer?')) {
+      setIsLoading(true);
       try {
-        await axios.delete(`http://localhost:5000/api/customers/${id}`);
+        await axios.delete(`${import.meta.env.VITE_API_URL}/customers/${id}`);
+        toast.success('Customer deleted successfully');
         fetchCustomers();
       } catch (err) {
-        alert(err.response?.data?.msg || 'Failed to delete customer');
+        toast.error(err.response?.data?.msg || 'Failed to delete customer');
+      } finally {
+        setIsLoading(false);
       }
     }
   };
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Manage Customers</h2>
-      <div className="mb-6 p-4 bg-white rounded-lg shadow">
-        <input
-          type="text"
-          placeholder="Name"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          className="w-full p-2 mb-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <input
-          type="text"
-          placeholder="NIC"
-          value={form.nic}
-          onChange={(e) => setForm({ ...form, nic: e.target.value })}
-          className="w-full p-2 mb-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <input
-          type="text"
-          placeholder="Contact No"
-          value={form.contactNo}
-          onChange={(e) => setForm({ ...form, contactNo: e.target.value })}
-          className="w-full p-2 mb-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <input
-          type="text"
-          placeholder="Address"
-          value={form.address}
-          onChange={(e) => setForm({ ...form, address: e.target.value })}
-          className="w-full p-2 mb-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+      <ToastContainer position="top-right" autoClose={3000} />
+      <h2 className="text-3xl font-bold mb-6 text-purple-800 text-center">Manage Customers</h2>
+
+      <div className="mb-6 p-6 bg-white rounded-2xl shadow-lg border border-purple-300">
+        <h3 className="text-xl font-semibold mb-4 text-purple-700">
+          {editingId ? 'Edit Customer' : 'Add New Customer'}
+        </h3>
+
+        <div className="grid grid-cols-1 gap-4">
+          <input
+            type="text"
+            placeholder="Name (Required)"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+          <input
+            type="text"
+            placeholder="NIC"
+            value={form.nic}
+            onChange={(e) => setForm({ ...form, nic: e.target.value })}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+          <input
+            type="text"
+            placeholder="Contact No"
+            value={form.contactNo}
+            onChange={(e) => setForm({ ...form, contactNo: e.target.value })}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+          <input
+            type="text"
+            placeholder="Address (Required)"
+            value={form.address}
+            onChange={(e) => setForm({ ...form, address: e.target.value })}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+          />
+        </div>
+
         <button
           onClick={handleSubmit}
-          className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          disabled={isLoading}
+          className="mt-4 w-full py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition duration-300 shadow-md disabled:bg-gray-400"
         >
-          {editingId ? 'Update Customer' : 'Add Customer'}
+          {isLoading ? 'Saving...' : editingId ? 'Update Customer' : 'Add Customer'}
         </button>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse bg-white shadow rounded-lg">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="p-3 border-b text-left">Name</th>
-              <th className="p-3 border-b text-left">NIC</th>
-              <th className="p-3 border-b text-left">Contact No</th>
-              <th className="p-3 border-b text-left">Address</th>
-              <th className="p-3 border-b text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {customers.map((customer) => (
-              <tr key={customer.id} className="hover:bg-gray-50">
-                <td className="p-3 border-b">{customer.name}</td>
-                <td className="p-3 border-b">{customer.nic || '-'}</td>
-                <td className="p-3 border-b">{customer.contactNo || '-'}</td>
-                <td className="p-3 border-b">{customer.address}</td>
-                <td className="p-3 border-b">
-                  <button
-                    onClick={() => handleEdit(customer)}
-                    className="mr-2 p-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(customer.id)}
-                    className="p-1 bg-red-500 text-white rounded hover:bg-red-600"
-                  >
-                    Delete
-                  </button>
-                </td>
+
+      {isLoading ? (
+        <p className="text-center text-purple-600 font-bold">Loading customers...</p>
+      ) : (
+        <div className="overflow-x-auto bg-white rounded-2xl shadow-lg border border-purple-300">
+          <table className="min-w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-purple-600 text-white uppercase text-sm">
+                <th className="p-3 border-b border-purple-400 text-left">ID</th>
+                <th className="p-3 border-b border-purple-400 text-left">Name</th>
+                <th className="p-3 border-b border-purple-400 text-left">NIC</th>
+                <th className="p-3 border-b border-purple-400 text-left">Contact No</th>
+                <th className="p-3 border-b border-purple-400 text-left">Address</th>
+                <th className="p-3 border-b border-purple-400 text-left">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {customers.map((customer) => (
+                <tr
+                  key={customer.id}
+                  className="hover:bg-purple-200 transition duration-200 border-b last:border-b-0"
+                >
+                  <td className="p-3">{customer.id}</td>
+                  <td className="p-3">{customer.name}</td>
+                  <td className="p-3">{customer.nic || '-'}</td>
+                  <td className="p-3">{customer.contactNo || '-'}</td>
+                  <td className="p-3">{customer.address}</td>
+                  <td className="p-3 flex gap-2">
+                    <button
+                      onClick={() => handleEdit(customer)}
+                      className="p-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition duration-200"
+                    >
+                      <FiEdit size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(customer.id)}
+                      className="p-2 bg-purple-400 text-white rounded hover:bg-purple-500 transition duration-200"
+                    >
+                      <FiTrash2 size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

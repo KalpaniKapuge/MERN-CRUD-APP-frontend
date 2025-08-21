@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function Orders() {
   const [orders, setOrders] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [items, setItems] = useState([]);
   const [form, setForm] = useState({ customer_id: '', items: [{ item_id: '', quantity: '' }] });
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchOrders();
@@ -16,29 +19,32 @@ function Orders() {
   }, []);
 
   const fetchOrders = async () => {
+    setIsLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/orders`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/orders`);
       setOrders(res.data);
     } catch (err) {
-      alert(err.response?.data?.msg || 'Failed to fetch orders');
+      toast.error(err.response?.data?.msg || 'Failed to fetch orders');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const fetchCustomers = async () => {
     try {
-      const res = await axios.get(`${API_URL}/customers`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/customers`);
       setCustomers(res.data);
     } catch (err) {
-      alert(err.response?.data?.msg || 'Failed to fetch customers');
+      toast.error(err.response?.data?.msg || 'Failed to fetch customers');
     }
   };
 
   const fetchItems = async () => {
     try {
-      const res = await axios.get(`${API_URL}/items`);
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/items`);
       setItems(res.data);
     } catch (err) {
-      alert(err.response?.data?.msg || 'Failed to fetch items');
+      toast.error(err.response?.data?.msg || 'Failed to fetch items');
     }
   };
 
@@ -57,99 +63,134 @@ function Orders() {
   };
 
   const handleSubmit = async () => {
+    if (!form.customer_id || form.items.some(i => !i.item_id || !i.quantity || parseInt(i.quantity) <= 0)) {
+      toast.error('Please select a customer and add at least one item with a positive quantity');
+      return;
+    }
+    setIsLoading(true);
     try {
-      await axios.post(`${API_URL}/orders`, form);
+      await axios.post(`${import.meta.env.VITE_API_URL}/orders`, form);
+      toast.success('Order created successfully');
       setForm({ customer_id: '', items: [{ item_id: '', quantity: '' }] });
       fetchOrders();
     } catch (err) {
-      alert(err.response?.data?.msg || 'Failed to create order');
+      toast.error(err.response?.data?.msg || 'Failed to create order');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Manage Orders</h2>
-      <div className="mb-6 p-4 bg-white rounded-lg shadow">
-        <select
-          value={form.customer_id}
-          onChange={(e) => setForm({ ...form, customer_id: e.target.value })}
-          className="w-full p-2 mb-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">Select Customer</option>
-          {customers.map((customer) => (
-            <option key={customer._id} value={customer._id}>{customer.name}</option>
-          ))}
-        </select>
-        {form.items.map((item, index) => (
-          <div key={index} className="flex items-center mb-2">
-            <select
-              value={item.item_id}
-              onChange={(e) => updateItemField(index, 'item_id', e.target.value)}
-              className="w-1/2 p-2 mr-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select Item</option>
-              {items.map((i) => (
-                <option key={i._id} value={i._id}>{i.name}</option>
-              ))}
-            </select>
-            <input
-              type="number"
-              placeholder="Quantity"
-              value={item.quantity}
-              onChange={(e) => updateItemField(index, 'quantity', e.target.value)}
-              className="w-1/4 p-2 mr-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {form.items.length > 1 && (
-              <button
-                onClick={() => removeItemField(index)}
-                className="p-1 bg-red-500 text-white rounded hover:bg-red-600"
+      <ToastContainer position="top-right" autoClose={3000} />
+      <h2 className="text-3xl font-bold mb-6 text-purple-800 text-center">Manage Orders</h2>
+
+      {/* Order Form */}
+      <div className="mb-6 p-6 bg-white rounded-2xl shadow-lg border border-purple-300">
+        <h3 className="text-xl font-semibold mb-4 text-purple-700">Create New Order</h3>
+
+        <div className="mb-4">
+          <label className="block text-gray-700 mb-2">Select Customer (Required)</label>
+          <select
+            value={form.customer_id}
+            onChange={(e) => setForm({ ...form, customer_id: e.target.value })}
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            disabled={isLoading}
+          >
+            <option value="">Select Customer</option>
+            {customers.map((customer) => (
+              <option key={customer.id} value={customer.id}>{customer.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-700 mb-2">Items</label>
+          {form.items.map((item, index) => (
+            <div key={index} className="flex items-center mb-3 bg-purple-50 p-2 rounded">
+              <select
+                value={item.item_id}
+                onChange={(e) => updateItemField(index, 'item_id', e.target.value)}
+                className="w-1/2 p-2 mr-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+                disabled={isLoading}
               >
-                Remove
-              </button>
-            )}
-          </div>
-        ))}
-        <button
-          onClick={addItemField}
-          className="p-2 bg-green-500 text-white rounded hover:bg-green-600 mb-2"
-        >
-          Add Item
-        </button>
+                <option value="">Select Item</option>
+                {items.map((i) => (
+                  <option key={i.id} value={i.id}>{i.name}</option>
+                ))}
+              </select>
+              <input
+                type="number"
+                placeholder="Quantity"
+                value={item.quantity}
+                onChange={(e) => updateItemField(index, 'quantity', e.target.value)}
+                className="w-1/4 p-2 mr-2 border rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+                disabled={isLoading}
+              />
+              {form.items.length > 1 && (
+                <button
+                  onClick={() => removeItemField(index)}
+                  className="p-2 bg-red-500 text-white rounded hover:bg-red-600 transition duration-200"
+                  disabled={isLoading}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            onClick={addItemField}
+            className="p-2 bg-purple-600 text-white rounded hover:bg-purple-700 mb-4 transition duration-200"
+            disabled={isLoading}
+          >
+            Add Item
+          </button>
+        </div>
+
         <button
           onClick={handleSubmit}
-          className="w-full p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          disabled={isLoading}
+          className="w-full py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition duration-300 disabled:bg-gray-400"
         >
-          Create Order
+          {isLoading ? 'Creating...' : 'Create Order'}
         </button>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse bg-white shadow rounded-lg">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="p-3 border-b text-left">Order ID</th>
-              <th className="p-3 border-b text-left">Customer</th>
-              <th className="p-3 border-b text-left">Items</th>
-              <th className="p-3 border-b text-left">Total Price</th>
-              <th className="p-3 border-b text-left">Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order) => (
-              <tr key={order._id} className="hover:bg-gray-50">
-                <td className="p-3 border-b">{order._id}</td>
-                <td className="p-3 border-b">{order.customer_name}</td>
-                <td className="p-3 border-b">
-                  {order.items.map((item, i) => (
-                    <div key={i}>{item.name} (x{item.quantity})</div>
-                  ))}
-                </td>
-                <td className="p-3 border-b">${order.total_price}</td>
-                <td className="p-3 border-b">{new Date(order.date).toLocaleDateString()}</td>
+
+      {/* Orders Table */}
+      {isLoading ? (
+        <p className="text-center text-purple-600 font-bold">Loading orders...</p>
+      ) : orders.length === 0 ? (
+        <p className="text-center text-purple-600">No orders found.</p>
+      ) : (
+        <div className="overflow-x-auto bg-white rounded-2xl shadow-lg border border-purple-300">
+          <table className="min-w-full border-collapse text-sm">
+            <thead>
+              <tr className="bg-purple-600 text-white uppercase text-sm">
+                <th className="p-3 border-b border-purple-400 text-left">Order ID</th>
+                <th className="p-3 border-b border-purple-400 text-left">Customer</th>
+                <th className="p-3 border-b border-purple-400 text-left">Items</th>
+                <th className="p-3 border-b border-purple-400 text-left">Total Price</th>
+                <th className="p-3 border-b border-purple-400 text-left">Date</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {orders.map((order) => (
+                <tr key={order.id} className="hover:bg-purple-200 transition duration-200 border-b last:border-b-0">
+                  <td className="p-3">{order.id}</td>
+                  <td className="p-3">{order.customer_name}</td>
+                  <td className="p-3">
+                    {order.items.map((item, i) => (
+                      <div key={i} className="text-sm">{item.name} (x{item.quantity})</div>
+                    ))}
+                  </td>
+                  <td className="p-3">${order.total_price.toFixed(2)}</td>
+                  <td className="p-3">{new Date(order.date).toLocaleDateString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
