@@ -13,7 +13,7 @@ function Navbar() {
   const isActive = (path) => location.pathname === path;
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
-  const navLinks = ['/dashboard', '/customers', '/items', '/orders'];
+  const navLinks = ['/dashboard', '/customers', '/items', '/orders','order-history'];
 
   return (
     <nav className="bg-purple-200 shadow-md sticky top-0 z-50">

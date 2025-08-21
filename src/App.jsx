@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import Customers from './pages/Customers.jsx';
 import Items from './pages/Item.jsx';
 import Orders from './pages/Orders.jsx';
+import OrderHistory from './pages/OrderHistory.jsx';
 
 function App() {
   return (
@@ -32,6 +33,9 @@ function App() {
           <Route
             path="/orders"
             element={<ProtectedRoute><Orders /></ProtectedRoute>}
+          />
+          <Route 
+            path="/order-history" element={<ProtectedRoute><OrderHistory /></ProtectedRoute>} 
           />
           <Route path="/" element={<Navigate to="/login" />} />
         </Routes>
